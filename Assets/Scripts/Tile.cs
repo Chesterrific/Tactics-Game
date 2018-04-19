@@ -53,6 +53,7 @@ public class Tile : MonoBehaviour {
             //Returns tile to normal color after all settings and movement.
             rend.material.color = startColor;
         }
+
     }
 
     //Will check all surronding tiles in each direction for another tile.
@@ -86,6 +87,7 @@ public class Tile : MonoBehaviour {
             Tile tile = item.GetComponent<Tile>();
 
             //If the tile is not null, is walkable, and is not occupied, it is added to the list of adjacent tiles.
+            //May change this later for targeting and etc.
             if (tile != null && tile.walkable && !tile.occupied)
             {
                 adjacentTiles.Add(tile);

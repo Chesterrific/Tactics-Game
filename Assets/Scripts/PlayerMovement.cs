@@ -15,7 +15,6 @@ public class PlayerMovement : Movement {
 		
 	}
 
-    //Calls SelectableTiles function on click of the player.
     public void OnMouseDown()
     {
         //Disables function when object is under another gameobject, like UI.
