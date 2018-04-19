@@ -4,115 +4,100 @@ using UnityEngine;
 
 public class Tile : MonoBehaviour {
 
-    //Neighbors of each tile
-    public List<Tile> adjacencyList = new List<Tile>();
-
-    //For BFS
-    public bool visited = false;
-    public Tile parent = null;
-    public int distance;
-
-    [Header("Tile Options")]
-    public bool walkable = true;
+    [Header("Tile States")]
+    public bool selectable = false;
     public bool current = false;
     public bool target = false;
-    public bool selectable = false;
+    public bool walkable = true;
+    public bool occupied = false;
+
+    //[HideInInspector] //For movement selection
+    //public bool visited = false;
 
     [Header("Tile Color Options")]
-    public Color c_current;
-    public Color c_target = Color.yellow;
-    public Color c_selectable = Color.blue;
+    public Color cSelectable = Color.blue;
+    public Color cCurrent = Color.red;
+    public Color cTarget = Color.yellow;
 
     //Tile specific items
     private Renderer rend;
     private Color startColor;
 
-	// Use this for initialization
-	void Start () {
+    //List of tiles that are adjacent to this one, will use for movement calculations.
+    public List<Tile> adjacentTiles = new List<Tile>();
+
+
+    private void Start()
+    {
         rend = GetComponent<Renderer>();
         startColor = rend.material.color;
-        //adjacenyList = new List<Tile>();
-        distance = 0;
-	}
-	
-	// Update is called once per frame
-	void Update () {
+        //FindNeighbors();
+    }
 
-        if (current)
+    private void Update()
+    {
+        if (selectable)
         {
-            rend.material.color = c_current;
+            rend.material.color = cSelectable;
+        }
+        else if (current)
+        {
+            rend.material.color = cCurrent;
         }
         else if (target)
         {
-            rend.material.color = c_target;
-        }
-        else if (selectable)
-        {
-            rend.material.color = c_selectable;
+            rend.material.color = cTarget;
         }
         else
         {
+            //Returns tile to normal color after all settings and movement.
             rend.material.color = startColor;
         }
-	}
+    }
+
+    //Will check all surronding tiles in each direction for another tile.
+    public void FindNeighbors()
+    {
+        Reset();
+        CheckTile(Vector3.forward); 
+        CheckTile(Vector3.back);
+        CheckTile(Vector3.left);
+        CheckTile(Vector3.right);
+    }
+
+    //Will add onto adjacenctTiles list
+     public void CheckTile(Vector3 direction)
+    {
+        Vector3 halfTileSize = rend.bounds.extents;
+
+        /* OverlapBox requires a Vector3 position to put the center of the box,
+         * and half the size of the box in each direction. So puting the box 1 unit
+         * in our desided direction and making the halfextent 1/4 of our tile size should 
+         * place the box in the middle of a tile and about .5*.5*.5. Ensuring it
+         * collides with the given neighbor tile.
+         */
+
+        Collider[] colliders = Physics.OverlapBox(transform.position + direction, halfTileSize/2);
+
+        //Grab each item in colliders array, basically what collided with our box from above.
+        foreach(Collider item in colliders)
+        {
+            //Grab the tile component of the item
+            Tile tile = item.GetComponent<Tile>();
+
+            //If the tile is not null, is walkable, and is not occupied, it is added to the list of adjacent tiles.
+            if (tile != null && tile.walkable && !tile.occupied)
+            {
+                adjacentTiles.Add(tile);
+            }
+        }
+    }
 
     public void Reset()
     {
-        adjacencyList.Clear();
-
+        adjacentTiles.Clear();
         current = false;
         target = false;
         selectable = false;
-
-        visited = false;
-        parent = null;
-        distance = 0;
-    }
-
-    //Checks each tile around current for neighbors.
-    //This function will populate the adjacency list of each individual tile in the game with a max of 4 tiles each.
-    public void FindNeighbors(float jumpHeight)
-    {
-        Reset();
-        CheckTile(Vector3.forward, jumpHeight);
-        CheckTile(Vector3.back, jumpHeight);
-        CheckTile(Vector3.right, jumpHeight);
-        CheckTile(Vector3.left, jumpHeight);
-    }
-
-    //This function constructs the adjacencyList.
-    public void CheckTile(Vector3 direction, float jumpHeight)
-    {
-        //1+jumpHeight/2 will determine which tiles we can move across based on our jumpheight.
-        //This vector extends about .25 units to the x and z and a bit over the y to find tiles.
-        Vector3 halfExtents = new Vector3(0.25f, (1 + jumpHeight) / 2.0f, 0.25f);
-
-        //Will determine if a tile is present next to current tile
-        //OverlapBox finds all colliders of objects that touch or overlap with the given box dimensions. In this case the halfExtents.
-        Collider[] colliders = Physics.OverlapBox(transform.position + direction, halfExtents);
-
-        //Grabs each collider returned from code above.
-        foreach (Collider item in colliders)
-        {
-            //Grabs tile component from the colliders.
-            Tile tile = item.GetComponent<Tile>();
-
-            //If the given tile is not null and the tile is walkable.
-            if(tile != null && tile.walkable)
-            {
-                RaycastHit hit;
-
-                //This call returns true if it hits something above the tile, namely a player in our case.
-                /* Maybe replace with something that tells us if a tile has someone on it by itself instead of using physics?
-                 * Something like bool occupied and set it to true or false each time something moves there?
-                 */
-                //If there is nothing 1 unit above the tile currently being worked on, it is added as an adjacent tile to the list.
-                if(!Physics.Raycast(tile.transform.position, Vector3.up, out hit, 1))
-                {
-                    //Adjacent tile is found and added to list of adjacent tiles
-                    adjacencyList.Add(tile);
-                }  
-            }
-        }
     }
 }

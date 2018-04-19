@@ -22,7 +22,7 @@ GameObject:
   - component: {fileID: 33655759262643678}
   - component: {fileID: 65505395397589632}
   - component: {fileID: 23463543247639904}
-  - component: {fileID: 114079129406800938}
+  - component: {fileID: 114767762129926448}
   m_Layer: 0
   m_Name: Tile
   m_TagString: Tile
@@ -96,7 +96,7 @@ BoxCollider:
   serializedVersion: 2
   m_Size: {x: 1, y: 1, z: 1}
   m_Center: {x: 0, y: 0, z: 0}
---- !u!114 &114079129406800938
+--- !u!114 &114767762129926448
 MonoBehaviour:
   m_ObjectHideFlags: 1
   m_PrefabParentObject: {fileID: 0}
@@ -104,17 +104,16 @@ MonoBehaviour:
   m_GameObject: {fileID: 1125262753561814}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: fe0764961365a124898ee5d0725261a1, type: 3}
+  m_Script: {fileID: 11500000, guid: 3e67501312c07564fb644ae40fb55183, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  adjacencyList: []
-  visited: 0
-  parent: {fileID: 0}
-  distance: 0
-  walkable: 1
+  selectable: 0
   current: 0
   target: 0
-  selectable: 0
-  c_current: {r: 0, g: 0, b: 0, a: 0}
-  c_target: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
-  c_selectable: {r: 0, g: 0, b: 1, a: 1}
+  walkable: 1
+  occupied: 0
+  visited: 0
+  cSelectable: {r: 0, g: 0, b: 1, a: 1}
+  cCurrent: {r: 1, g: 0, b: 0, a: 1}
+  cTarget: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
+  adjacentTiles: []
