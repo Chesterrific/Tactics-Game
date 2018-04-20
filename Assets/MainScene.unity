@@ -1852,8 +1852,8 @@ Transform:
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 0}
   m_GameObject: {fileID: 608479156}
-  m_LocalRotation: {x: 0.38268343, y: 0, z: 0, w: 0.92387956}
-  m_LocalPosition: {x: 0, y: 12.5, z: -12}
+  m_LocalRotation: {x: 0.38268346, y: -0, z: -0, w: 0.9238796}
+  m_LocalPosition: {x: -0, y: 12.5, z: -12}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 816570209}
@@ -2804,9 +2804,13 @@ MonoBehaviour:
   pointOfInterest: {fileID: 0}
   mainCamera: {fileID: 608479159}
   panSpeed: 15
-  scrollSpeed: 10
-  minY: 3.5
-  maxY: 17.5
+  scrollSpeed: 20
+  minX: -15
+  maxX: 30
+  minZ: -15
+  maxZ: 30
+  maxZoomIn: 3.5
+  maxZoomOut: 17.5
   transitionSpeed: 5
   cameraResetSpeed: 0.5
 --- !u!4 &816570209

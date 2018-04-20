@@ -10,20 +10,25 @@ public class CameraController : MonoBehaviour {
     public Transform[] views;
     public Transform startingCameraPosition;
     public Transform startingCameraZoom;
-    public Transform pointOfInterest;
+    public Transform pointOfInterest; //Useful for later focusing on things that matter like player turn start or spell cast.
     public Camera mainCamera;
 
     private Transform currentView;
     private int viewCounter;
 
-    [Header("Camera Options")]
+    [Header("Camera Options")] //Can be set per map if we get that far.
     public float panSpeed = 15f;
-    public float scrollSpeed = 10f;
-    public float minY = 3.5f;
-    public float maxY = 17.5f;
+    public float scrollSpeed = 20f;
+    public float minX = -15f;
+    public float maxX = 30f;
+    public float minZ = -15f;
+    public float maxZ = 30f;
+    public float maxZoomIn = 3.5f;
+    public float maxZoomOut = 17.5f;
     public float transitionSpeed = 5f;
     public float cameraResetSpeed = .5f;
 
+    //To allow access of camera variables to everything in the project
     private void Awake()
     {
         if(cam != null)
@@ -49,6 +54,8 @@ public class CameraController : MonoBehaviour {
             return;
         }*/
 
+        //Camera controller's position.
+        Vector3 pos = transform.position;
 
         //up 
         if (Input.GetKey("w"))
@@ -74,23 +81,25 @@ public class CameraController : MonoBehaviour {
             transform.Translate(Vector3.right * panSpeed * Time.deltaTime); 
         }
 
-        //Middle Scroll Wheel click
-        if (Input.GetMouseButtonDown(2))
+        //Middle Scroll Wheel click or if camera goes way out of bounds
+        if (Input.GetMouseButtonDown(2) || pos.x > maxX || pos.z > maxZ || pos.x < minX || pos.z < minZ)
         {
             ResetCamera();
         }
 
         //mouse scrolling
         float scroll = Input.GetAxis("Mouse ScrollWheel");
-        Vector3 pos = mainCamera.transform.position;
 
-        if (scroll > 0f && pos.y > minY)
+        //Store mainCamera position.
+        Vector3 zoom = mainCamera.transform.position;
+
+        if (scroll > 0f && zoom.y > maxZoomIn)
         {
             mainCamera.transform.Translate(Vector3.forward * scrollSpeed * Time.deltaTime, Space.Self);
             
         }
 
-        else if (scroll < 0f && pos.y < maxY)
+        else if (scroll < 0f && zoom.y < maxZoomOut)
         {
             mainCamera.transform.Translate(Vector3.back * scrollSpeed * Time.deltaTime, Space.Self);
            
@@ -103,9 +112,7 @@ public class CameraController : MonoBehaviour {
     {
         viewCounter = 0;
         currentView = startingCameraPosition;
-        //transform.position = startingCameraPosition.position;
         StartCoroutine(Transition());
-        //mainCamera.transform.position = startingCameraZoom.position;
         
     }
 
@@ -118,6 +125,7 @@ public class CameraController : MonoBehaviour {
         {
             t += Time.deltaTime * (Time.timeScale / cameraResetSpeed);
 
+            //Lerps to starting positions
             transform.position = Vector3.Lerp(currentCamPos, startingCameraPosition.position, t);
             mainCamera.transform.position = Vector3.Lerp(currentCamZoom, startingCameraZoom.position, t);
 

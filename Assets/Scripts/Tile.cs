@@ -22,6 +22,7 @@ public class Tile : MonoBehaviour {
     //Tile specific items
     private Renderer rend;
     private Color startColor;
+    private CameraController cam;
 
     //List of tiles that are adjacent to this one, will use for movement calculations.
     public List<Tile> adjacentTiles = new List<Tile>();
@@ -31,6 +32,8 @@ public class Tile : MonoBehaviour {
     {
         rend = GetComponent<Renderer>();
         startColor = rend.material.color;
+        cam = CameraController.cam;
+        //Finds all tile's neighbors at the start of the game.
         //FindNeighbors();
     }
 
