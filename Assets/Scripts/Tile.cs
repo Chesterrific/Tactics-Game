@@ -11,18 +11,22 @@ public class Tile : MonoBehaviour {
     public bool walkable = true;
     public bool occupied = false;
 
-    //[HideInInspector] //For movement selection
-    //public bool visited = false;
-
     [Header("Tile Color Options")]
     public Color cSelectable = Color.blue;
     public Color cCurrent = Color.red;
     public Color cTarget = Color.yellow;
 
+
+    [Header("Movement Variables")]
+    public bool visited = false;
+    public Tile parent = null;
+    public int distanceFromOrigin;
+
     //Tile specific items
     private Renderer rend;
     private Color startColor;
     private CameraController cam;
+     
 
     //List of tiles that are adjacent to this one, will use for movement calculations.
     public List<Tile> adjacentTiles = new List<Tile>();
@@ -33,23 +37,25 @@ public class Tile : MonoBehaviour {
         rend = GetComponent<Renderer>();
         startColor = rend.material.color;
         cam = CameraController.cam;
+        distanceFromOrigin = 0;
         //Finds all tile's neighbors at the start of the game.
         //FindNeighbors();
     }
 
     private void Update()
     {
-        if (selectable)
+
+        if (target)
         {
-            rend.material.color = cSelectable;
+            rend.material.color = cTarget;
         }
         else if (current)
         {
             rend.material.color = cCurrent;
         }
-        else if (target)
+        else if (selectable)
         {
-            rend.material.color = cTarget;
+            rend.material.color = cSelectable;
         }
         else
         {
@@ -101,8 +107,14 @@ public class Tile : MonoBehaviour {
     public void Reset()
     {
         adjacentTiles.Clear();
+
+        selectable = false;
         current = false;
         target = false;
-        selectable = false;
+        //occupied = false;
+
+        parent = null;
+        visited = false;
+        distanceFromOrigin = 0;
     }
 }

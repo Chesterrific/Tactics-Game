@@ -12,7 +12,15 @@ public class PlayerMovement : Movement {
 	
 	// Update is called once per frame
 	void Update () {
-		
+
+        if (!moving)
+        {
+            CheckMouse();
+        }
+        else
+        {
+            Move();
+        }
 	}
 
     public void OnMouseDown()
@@ -23,7 +31,33 @@ public class PlayerMovement : Movement {
 
         if (!moving)
         {
-            GetSelectableTiles();
+            FindSelectableTiles();
+        }
+    }
+
+    void CheckMouse()
+    {
+        if (Input.GetMouseButton(0))
+        {
+            //Creates a ray from camera to mouse position.
+            Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+
+            RaycastHit hit;
+
+            //If our ray hit something, output it to hit.
+            if(Physics.Raycast(ray, out hit))
+            {
+                //Check if what we hit was a Tile.
+                if (hit.collider.tag == "Tile")
+                {
+                    Tile t = hit.collider.GetComponent<Tile>();
+
+                    if (t.selectable)
+                    {
+                        MoveToTile(t);
+                    }
+                }
+            }
         }
     }
 }
