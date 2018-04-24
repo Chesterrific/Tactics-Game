@@ -65,29 +65,34 @@ public class Tile : MonoBehaviour {
 
     }
 
-    //Will check all surronding tiles in each direction for another tile.
-    public void FindNeighbors()
+    /* Will check all surronding tiles in each direction for another tile.
+     * Jump Height is for finding possible tiles to move to based on player's jumpHeight stat.
+     */
+    public void FindNeighbors(float jumpHeight)
     {
         Reset();
-        CheckTile(Vector3.forward); 
-        CheckTile(Vector3.back);
-        CheckTile(Vector3.left);
-        CheckTile(Vector3.right);
+        CheckTile(Vector3.forward, jumpHeight); 
+        CheckTile(Vector3.back, jumpHeight);
+        CheckTile(Vector3.left, jumpHeight);
+        CheckTile(Vector3.right, jumpHeight);
     }
 
     //Will add onto adjacenctTiles list
-     public void CheckTile(Vector3 direction)
+     public void CheckTile(Vector3 direction, float jumpHeight)
     {
-        Vector3 halfTileSize = rend.bounds.extents;
+
+        //transform.GetComponent<Collider>().bounds.extents.x)/2.0f grabs the tile's halfextend in the x direction and divides it by two for the overlap box function later.
+
+        Vector3 halfTileSize = new Vector3((transform.GetComponent<Collider>().bounds.extents.x)/2.0f, (1 + jumpHeight)/2.0f, (transform.GetComponent<Collider>().bounds.extents.z)/2.0f);
 
         /* OverlapBox requires a Vector3 position to put the center of the box,
          * and half the size of the box in each direction. So puting the box 1 unit
-         * in our desided direction and making the halfextent 1/4 of our tile size should 
-         * place the box in the middle of a tile and about .5*.5*.5. Ensuring it
-         * collides with the given neighbor tile.
+         * towards our desided direction and making the halfextent 1/4 of our tile size should 
+         * place a .5 * (1 + jumpHeight) * .5 sized collision box in the middle of the tile. Ensuring it
+         * only collides with the given neighbor tile we want.
          */
 
-        Collider[] colliders = Physics.OverlapBox(transform.position + direction, halfTileSize/2);
+        Collider[] colliders = Physics.OverlapBox(transform.position + direction, halfTileSize);
 
         //Grab each item in colliders array, basically what collided with our box from above.
         foreach(Collider item in colliders)

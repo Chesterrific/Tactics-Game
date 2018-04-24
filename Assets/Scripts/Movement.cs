@@ -12,8 +12,21 @@ public class Movement : MonoBehaviour {
     public bool moving = false;
     public int move = 3;
     public float moveSpeed = 10.0f;
+    public float jumpHeight = 2.0f;
+    public float jumpVelocity = 0.5f;
     private float halfHeight = 0;
     Tile currentTile; //Tile occupied by this player.
+
+    //Player States
+    Vector3 dir = new Vector3(); //Which way our player is facing.
+    Vector3 velocity = new Vector3();
+    Vector3 jumpTarget = new Vector3();
+    bool fallingDown = false;
+    bool jumpingUp = false;
+    bool movingEdge = false;
+
+    //If our speed is too high, we need to set the distance comparison to be bigger
+    float unstuck;
 
     //List that holds all currently selectable tiles of this player.
     public List<Tile> selectableTiles = new List<Tile>();
@@ -29,7 +42,9 @@ public class Movement : MonoBehaviour {
 
         //Calculates halfHeight of player.
         halfHeight = GetComponent<Collider>().bounds.extents.y;
-	}
+
+        unstuck = moveSpeed / 30.0f;
+    }
 	
     //To be used to find currentTile.
 	public void GetCurrentTile()
@@ -59,9 +74,10 @@ public class Movement : MonoBehaviour {
         foreach (GameObject tile in tiles)
         {
             Tile t = tile.GetComponent<Tile>();
-            t.FindNeighbors();
+            t.FindNeighbors(jumpHeight);
         }
     }
+
     public void FindSelectableTiles()
     {
         //We compute the adjacency list of all the tiles in the game.
@@ -121,19 +137,14 @@ public class Movement : MonoBehaviour {
 
     public void Move()
     {
-        Vector3 dir = new Vector3();
-
-        //If our speed is too high, we need to set the distance comparison to be bigger
-        float unstuck = 0.3f;
-        if(moveSpeed > 35f)
-        {
-            unstuck = 0.6f;
-        }
+        unstuck = moveSpeed / 25.0f;
 
         //As long as something's in the path, we can move.
         if (path.Count > 0)
         {
             Tile t = path.Peek();
+
+            //Position we're moving to.
             Vector3 target = t.transform.position;
 
             //We add halfHeight of player to halfHeight of tile to make sure we don't move into tile and instead above it.
@@ -141,11 +152,23 @@ public class Movement : MonoBehaviour {
 
             if (Vector3.Distance(transform.position, target) >= unstuck)
             {
-                //Directs our player towards proper direction
-                dir = target - transform.position;
+                //Returns true if our player's position isn't the same as our calculated target y, meaning they aren't on the same level.
+                bool jump = transform.position.y != target.y;
 
+                if (jump)
+                {
+                    Jump(target);
+                }
+                else
+                {
+                    //Directs our player towards proper direction.
+                    CalculateDirection(target);
+                    SetHorizontalVelocity();
+                }
                 //Actual movement
-                transform.Translate(dir.normalized * moveSpeed * Time.deltaTime, Space.World);
+                transform.forward = dir;
+                transform.position += velocity * Time.deltaTime;
+                //transform.Translate(dir * moveSpeed * Time.deltaTime, Space.World);
             }
             else
             {
@@ -158,10 +181,13 @@ public class Movement : MonoBehaviour {
         {
             RemoveSelectableTiles();
             moving = false;
+
+            //Set new tile as our player's current tile and set tile as occupied.
+            GetCurrentTile();
         }
     }
 
-protected void RemoveSelectableTiles()
+    protected void RemoveSelectableTiles()
     {
         //After we're finished moving, our old current tile is reset.
         if (currentTile != null)
@@ -181,8 +207,124 @@ protected void RemoveSelectableTiles()
 
     }
 
-      
-    /* Doesn't compute distance correctly.
+    void CalculateDirection(Vector3 target)
+    {
+        dir = target - transform.position;
+        dir.Normalize();
+    }
+    
+    void SetHorizontalVelocity()
+    {
+        velocity = dir * moveSpeed;
+    }
+
+    void Jump(Vector3 target)
+    {
+        if (fallingDown)
+        {
+            FallDownward(target);
+        }
+        else if (jumpingUp)
+        {
+            JumpUpward(target);
+        }
+        else if (movingEdge)
+        {
+            MoveToEdge();
+        }
+        else
+        {
+            PrepareJump(target);
+        }
+    }
+     
+    void PrepareJump(Vector3 target)
+    {
+        float targetY = target.y;
+
+        target.y = transform.position.y;
+
+        CalculateDirection(target);
+
+        //Falling down
+        if (transform.position.y > targetY)
+        {
+            //We first move to edge, and therefore we aren't falling yet.
+            fallingDown = false;
+            jumpingUp = false;
+            movingEdge = true;
+
+            //We add half the distance we need to travel to our current position, giving us the edge of the current tile we're on.
+            jumpTarget = transform.position + (target - transform.position) / 2.0f;
+        }
+        //Jumping up
+        else
+        {
+            fallingDown = false;
+            jumpingUp = true;
+            movingEdge = false;
+
+            //How fast we move forward in the jump up animation.
+            velocity = dir * 0.5f;
+
+            float difference = targetY - transform.position.y;
+
+            //Initial "jump" speed.
+            velocity.y = jumpVelocity * (0.5f + difference / 2.0f);
+        }
+    }
+
+    void FallDownward(Vector3 target)
+    {
+        //Falling Speed
+        velocity += Physics.gravity * 2f * Time.deltaTime ;
+
+        if (transform.position.y < target.y)
+        {
+            fallingDown = false;
+
+            Vector3 p = transform.position;
+            p.y = target.y;
+            transform.position = p;
+
+            velocity = new Vector3();
+        }
+    }
+
+    void JumpUpward(Vector3 target)
+    {
+        //Strength of gravity on our player.
+        velocity += Physics.gravity * 0.8f * Time.deltaTime;
+
+        if (transform.position.y > target.y)
+        {
+            jumpingUp = false;
+            fallingDown = true;
+        }
+    }
+
+    void MoveToEdge()
+    {
+        if (Vector3.Distance(transform.position, jumpTarget) >= unstuck) 
+        {
+            SetHorizontalVelocity();
+        }
+        else
+        {
+            movingEdge = false;
+            fallingDown = true;
+
+            //Horizontal Speed during jump.
+            velocity /= moveSpeed * 1.2f;
+            velocity.y = 1.5f;
+        }
+    }
+
+
+    /* Doesn't compute distance of tile from player correctly.
+     * 
+     * 
+     * 
     //Helper function to set up recursion for later.
     public void GetSelectableTiles()
     {
@@ -200,8 +342,7 @@ protected void RemoveSelectableTiles()
     /* Grabs adjacent tiles of adjacent tiles until counter equals move.
      * This function will keep going in one direction until counter matches move,
      * it then backtracks to hit all other directions until it exhausts all possibilities.
-     */
-    /*
+   
    public void GetTiles(Tile tile, int distance)
    {
        tile.distanceFromOrigin = distance;
@@ -220,10 +361,5 @@ protected void RemoveSelectableTiles()
            GetTiles(tile.adjacentTiles[i], distance + 1);
        }
    }
-
-
-   public void SetTargetLocation(Tile target)
-   {
-
-   }*/
+   */
 }
