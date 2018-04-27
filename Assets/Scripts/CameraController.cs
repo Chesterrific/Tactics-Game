@@ -10,7 +10,6 @@ public class CameraController : MonoBehaviour {
     public Transform[] views;
     public Transform startingCameraPosition;
     public Transform startingCameraZoom;
-    public Transform pointOfInterest; //Useful for later focusing on things that matter like player turn start or spell cast.
     public Camera mainCamera;
 
     private Transform currentView;
@@ -110,8 +109,8 @@ public class CameraController : MonoBehaviour {
     //Resets camera coordinates to given startingCameraPosition.
     public void ResetCamera()
     {
-        viewCounter = 0;
-        currentView = startingCameraPosition;
+        //viewCounter = 0;
+        currentView = views[viewCounter];
         StartCoroutine(Transition());
         
     }
@@ -126,7 +125,7 @@ public class CameraController : MonoBehaviour {
             t += Time.deltaTime * (Time.timeScale / cameraResetSpeed);
 
             //Lerps to starting positions
-            transform.position = Vector3.Lerp(currentCamPos, startingCameraPosition.position, t);
+            transform.position = Vector3.Lerp(currentCamPos, currentView.position, t);
             mainCamera.transform.position = Vector3.Lerp(currentCamZoom, startingCameraZoom.position, t);
 
             yield return 0;
@@ -159,12 +158,19 @@ public class CameraController : MonoBehaviour {
        
     }
 
+    public void FocusOnPOI(Tile tile, Vector3 offSet)
+    {
+        currentView = tile.tileViews[viewCounter];
+        transform.position = Vector3.Lerp(transform.position, currentView.position, Time.deltaTime * transitionSpeed);
+
+    }
 
     private void LateUpdate()
     {
         //Lerp to position, smooth transform to position.
         //transform.position = Vector3.Lerp(transform.position, currentView.position, Time.deltaTime * transitionSpeed);
 
+        //From start position to end position, in our case rotations.
         transform.rotation = Quaternion.Lerp(transform.rotation, currentView.rotation, Time.deltaTime * transitionSpeed);
     }
 }

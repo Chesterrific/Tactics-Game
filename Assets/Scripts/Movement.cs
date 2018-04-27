@@ -7,15 +7,8 @@ public class Movement : MonoBehaviour {
     //To hold all the tiles currently in the scene.
     GameObject[] tiles;
 
-    //Move to its own script later.
-    [Header("Player Stats")]
-    public bool moving = false;
-    public int move = 3;
-    public float moveSpeed = 10.0f;
-    public float jumpHeight = 2.0f;
-    public float jumpVelocity = 0.5f;
-    private float halfHeight = 0;
-    Tile currentTile; //Tile occupied by this player.
+    //Player Stats
+    protected PlayerStats thisPlayer;
 
     //Player States
     Vector3 dir = new Vector3(); //Which way our player is facing.
@@ -24,6 +17,7 @@ public class Movement : MonoBehaviour {
     bool fallingDown = false;
     bool jumpingUp = false;
     bool movingEdge = false;
+    public bool turn = false;
 
     //If our speed is too high, we need to set the distance comparison to be bigger
     float unstuck;
@@ -37,19 +31,24 @@ public class Movement : MonoBehaviour {
 	//To be used by player after it has been initialized onto field.
 	protected void Init()
     {
+        //Grab its stats from the script.
+        thisPlayer = this.gameObject.GetComponent<PlayerStats>();
+
         //Populates tiles array with all tile objects currently in scene.
         tiles = GameObject.FindGameObjectsWithTag("Tile");
 
         //Calculates halfHeight of player.
-        halfHeight = GetComponent<Collider>().bounds.extents.y;
+        thisPlayer.halfHeight = GetComponent<Collider>().bounds.extents.y;
 
-        unstuck = moveSpeed / 30.0f;
+        //unstuck = thisPlayer.moveSpeed / 30.0f;
+
+        //TurnManager.AddUnit(this);
     }
 	
     //To be used to find currentTile.
 	public void GetCurrentTile()
     {
-        currentTile = GetTargetTile(gameObject);
+        thisPlayer.currentTile = GetTargetTile(gameObject);
     }
 
     //Should return tile right below player.
@@ -74,7 +73,7 @@ public class Movement : MonoBehaviour {
         foreach (GameObject tile in tiles)
         {
             Tile t = tile.GetComponent<Tile>();
-            t.FindNeighbors(jumpHeight);
+            t.FindNeighbors(thisPlayer.jumpHeight);
         }
     }
 
@@ -86,8 +85,8 @@ public class Movement : MonoBehaviour {
 
         Queue<Tile> process = new Queue<Tile>();
 
-        process.Enqueue(currentTile);
-        currentTile.visited = true;
+        process.Enqueue(thisPlayer.currentTile);
+        thisPlayer.currentTile.visited = true;
         //currentTile.parent = ??  leave as null 
 
         //While the queue is not empty, we can still move.
@@ -102,7 +101,7 @@ public class Movement : MonoBehaviour {
 
             //While the distance we want to move doesn't exceed how far away we can move.
             //We process all the tiles within our range.
-            if (t.distanceFromOrigin < move)
+            if (t.distanceFromOrigin < thisPlayer.move)
             {
                 foreach (Tile tile in t.adjacentTiles)
                 {
@@ -125,7 +124,7 @@ public class Movement : MonoBehaviour {
         path.Clear();
 
         target.target = true;
-        moving = true;
+        thisPlayer.moving = true;
 
         Tile next = target;
         while(next != null)
@@ -137,7 +136,7 @@ public class Movement : MonoBehaviour {
 
     public void Move()
     {
-        unstuck = moveSpeed / 25.0f;
+        unstuck = thisPlayer.moveSpeed / 25.0f;
 
         //As long as something's in the path, we can move.
         if (path.Count > 0)
@@ -148,7 +147,7 @@ public class Movement : MonoBehaviour {
             Vector3 target = t.transform.position;
 
             //We add halfHeight of player to halfHeight of tile to make sure we don't move into tile and instead above it.
-            target.y += halfHeight + t.GetComponent<Collider>().bounds.extents.y;
+            target.y += thisPlayer.halfHeight + t.GetComponent<Collider>().bounds.extents.y;
 
             if (Vector3.Distance(transform.position, target) >= unstuck)
             {
@@ -158,6 +157,7 @@ public class Movement : MonoBehaviour {
                 if (jump)
                 {
                     Jump(target);
+
                 }
                 else
                 {
@@ -180,21 +180,23 @@ public class Movement : MonoBehaviour {
         else
         {
             RemoveSelectableTiles();
-            moving = false;
+            thisPlayer.moving = false;
 
             //Set new tile as our player's current tile and set tile as occupied.
             GetCurrentTile();
+
+            //TurnManager.EndTurn();
         }
     }
 
     protected void RemoveSelectableTiles()
     {
         //After we're finished moving, our old current tile is reset.
-        if (currentTile != null)
+        if (thisPlayer.currentTile != null)
         {
-            currentTile.occupied = false;
-            currentTile.current = false;
-            currentTile = null;
+            thisPlayer.currentTile.occupied = false;
+            thisPlayer.currentTile.current = false;
+            thisPlayer.currentTile = null;
         }
 
         //We reset the selectableTiles array after we move.
@@ -215,7 +217,7 @@ public class Movement : MonoBehaviour {
     
     void SetHorizontalVelocity()
     {
-        velocity = dir * moveSpeed;
+        velocity = dir * thisPlayer.moveSpeed;
     }
 
     void Jump(Vector3 target)
@@ -246,7 +248,7 @@ public class Movement : MonoBehaviour {
 
         CalculateDirection(target);
 
-        //Falling down
+        //Falling down, if position we want to move to is lower than our current position.
         if (transform.position.y > targetY)
         {
             //We first move to edge, and therefore we aren't falling yet.
@@ -270,7 +272,7 @@ public class Movement : MonoBehaviour {
             float difference = targetY - transform.position.y;
 
             //Initial "jump" speed.
-            velocity.y = jumpVelocity * (0.5f + difference / 2.0f);
+            velocity.y = thisPlayer.jumpVelocity * (0.5f + difference / 2.0f);
         }
     }
 
@@ -279,7 +281,7 @@ public class Movement : MonoBehaviour {
         //Falling Speed
         velocity += Physics.gravity * 2f * Time.deltaTime ;
 
-        if (transform.position.y < target.y)
+        if (transform.position.y <= target.y)
         {
             fallingDown = false;
 
@@ -315,12 +317,20 @@ public class Movement : MonoBehaviour {
             fallingDown = true;
 
             //Horizontal Speed during jump.
-            velocity /= moveSpeed * 1.2f;
+            velocity /= thisPlayer.moveSpeed * 1.2f;
             velocity.y = 1.5f;
         }
     }
 
+    public void BeginTurn()
+    {
+        turn = true;
+    }
 
+    public void EndTurn()
+    {
+        turn = false;
+    }
     /* Doesn't compute distance of tile from player correctly.
      * 
      * 

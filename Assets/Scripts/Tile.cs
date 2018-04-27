@@ -10,6 +10,8 @@ public class Tile : MonoBehaviour {
     public bool target = false;
     public bool walkable = true;
     public bool occupied = false;
+    public bool pointOfInterest = false;
+    
 
     [Header("Tile Color Options")]
     public Color cSelectable = Color.blue;
@@ -21,6 +23,12 @@ public class Tile : MonoBehaviour {
     public bool visited = false;
     public Tile parent = null;
     public int distanceFromOrigin;
+
+    [Header("Camera Angles")]
+    public Transform[] tileViews;
+    public Vector3 camOffset = new Vector3(6, -7.5f, 6f);
+    private bool needToResetCam = false;
+
 
     //Tile specific items
     private Renderer rend;
@@ -62,6 +70,16 @@ public class Tile : MonoBehaviour {
             //Returns tile to normal color after all settings and movement.
             rend.material.color = startColor;
         }
+        if (pointOfInterest)
+        {
+            cam.FocusOnPOI(this, camOffset);
+            needToResetCam = true;
+        }
+        else if (!pointOfInterest && needToResetCam)
+        {
+            cam.ResetCamera();
+            needToResetCam = false;
+        }
 
     }
 
@@ -83,12 +101,12 @@ public class Tile : MonoBehaviour {
 
         //transform.GetComponent<Collider>().bounds.extents.x)/2.0f grabs the tile's halfextend in the x direction and divides it by two for the overlap box function later.
 
-        Vector3 halfTileSize = new Vector3((transform.GetComponent<Collider>().bounds.extents.x)/2.0f, (1 + jumpHeight)/2.0f, (transform.GetComponent<Collider>().bounds.extents.z)/2.0f);
-
+        Vector3 halfTileSize = new Vector3((transform.GetComponent<Collider>().bounds.extents.x)/2.0f, jumpHeight, (transform.GetComponent<Collider>().bounds.extents.z)/2.0f);
+        
         /* OverlapBox requires a Vector3 position to put the center of the box,
          * and half the size of the box in each direction. So puting the box 1 unit
          * towards our desided direction and making the halfextent 1/4 of our tile size should 
-         * place a .5 * (1 + jumpHeight) * .5 sized collision box in the middle of the tile. Ensuring it
+         * place a .5 * jumpheight * .5 sized collision box in the middle of the tile. Ensuring it
          * only collides with the given neighbor tile we want.
          */
 
@@ -116,6 +134,7 @@ public class Tile : MonoBehaviour {
         selectable = false;
         current = false;
         target = false;
+        pointOfInterest = false;
         //occupied = false;
 
         parent = null;

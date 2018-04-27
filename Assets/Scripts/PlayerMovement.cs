@@ -13,7 +13,12 @@ public class PlayerMovement : Movement {
 	// Update is called once per frame
 	void Update () {
 
-        if (!moving)
+        /*if (!turn)
+        {
+            return;
+        }*/
+
+        if (!thisPlayer.moving)
         {
             CheckMouse();
         }
@@ -29,7 +34,7 @@ public class PlayerMovement : Movement {
         if (EventSystem.current.IsPointerOverGameObject())
             return;
 
-        if (!moving)
+        if (!thisPlayer.moving)
         {
             FindSelectableTiles();
         }
@@ -37,6 +42,10 @@ public class PlayerMovement : Movement {
 
     void CheckMouse()
     {
+        //Disables function when object is under another gameobject, like UI.
+        if (EventSystem.current.IsPointerOverGameObject())
+            return;
+
         if (Input.GetMouseButton(0))
         {
             //Creates a ray from camera to mouse position.
